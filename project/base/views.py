@@ -2,6 +2,9 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from .models import PerevalAdd, PerevalImages, User
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+
 from .serializers import (
     PerevalAddSerializer,
     PerevalImagesSerializer,
@@ -31,6 +34,11 @@ class PerevalAddViewSet(viewsets.ModelViewSet):
 
         return Response(response_data, status=200)  # Ответ с данными о статусе и id
 
+    @action(detail=True, methods=['get'])
+    def get_pereval_by_id(self, request, pk=None):
+        pereval = get_object_or_404(PerevalAdd, pk=pk)
+        serializer = PerevalAddSerializer(pereval)
+        return Response(serializer.data)
     def handle_exception(self, exc):
         if isinstance(exc, APIException):
             return Response({'status': exc.status_code, 'message': exc.detail}, status=exc.status_code)
