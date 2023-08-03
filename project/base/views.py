@@ -1,10 +1,10 @@
-from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.exceptions import APIException
-from .models import PerevalAdd, PerevalImages, User
-from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import APIException
+from rest_framework.response import Response
 
+from .models import PerevalAdd, PerevalImages, User
 from .serializers import (
     PerevalAddSerializer,
     PerevalImagesSerializer,
@@ -39,6 +39,33 @@ class PerevalAddViewSet(viewsets.ModelViewSet):
         pereval = get_object_or_404(PerevalAdd, pk=pk)
         serializer = PerevalAddSerializer(pereval)
         return Response(serializer.data)
+
+    def handle_exception(self, exc):
+        if isinstance(exc, APIException):
+            return Response({'status': exc.status_code, 'message': exc.detail}, status=exc.status_code)
+
+        return super().handle_exception(exc)
+
+    @action(detail=True, methods=['put'])
+    def edit_pereval(self, request, pk=None):
+        pereval = get_object_or_404(PerevalAdd, pk=pk)
+
+        # Проверяем, что статус перевала "new"
+        if pereval.status != 'new':
+            return Response({'state': 0, 'message': 'Нельзя редактировать запись, которая уже взята в работу.'},
+                            status=400)
+
+        # Десериализуем данные и проверяем их валидность
+        serializer = PerevalAddCreateSerializer(pereval, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            instance = serializer.save()
+        except Exception as e:
+            raise APIException(detail="Ошибка при выполнении операции", code=500)
+
+        return Response({'state': 1, 'message': 'Запись успешно отредактирована.'}, status=200)
+
     def handle_exception(self, exc):
         if isinstance(exc, APIException):
             return Response({'status': exc.status_code, 'message': exc.detail}, status=exc.status_code)
