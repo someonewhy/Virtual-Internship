@@ -8,5 +8,7 @@ router.register(r'images', PerevalImagesViewSet, basename='images')
 router.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
+    path('api/perevals/get_perevals_by_user_email/', PerevalAddViewSet.as_view({'get': 'get_perevals_by_user_email'}), name='perevals-by-user-email'),
+    # другие URL-шаблоны для других эндпоинтов, если они есть
 ]

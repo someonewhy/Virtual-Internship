@@ -18,11 +18,24 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from project.base.views import PerevalAddViewSet, PerevalImagesViewSet, UserViewSet
 
-
+# Создаем роутер для автоматического создания URL-шаблонов для наших viewsets
+router = DefaultRouter()
+router.register(r'perevals', PerevalAddViewSet, basename='perevals')
+router.register(r'images', PerevalImagesViewSet, basename='images')
+router.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
+    # URL-шаблоны для админки Django
     path('admin/', admin.site.urls),
-    path('base/', include('base.urls')),
+
+    # URL-шаблоны для API
+    path('api/', include(router.urls)),
+    path('api/perevals/get_perevals_by_user_email/', PerevalAddViewSet.as_view({'get': 'get_perevals_by_user_email'}), name='perevals-by-user-email'),
+
+    # URL-шаблоны для аутентификации в REST framework (если нужны)
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
+
