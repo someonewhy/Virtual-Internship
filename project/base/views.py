@@ -2,8 +2,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
-
 from .models import PerevalAdd, PerevalImages, User
 from .serializers import (
     PerevalAddSerializer,
@@ -71,6 +71,23 @@ class PerevalAddViewSet(viewsets.ModelViewSet):
             return Response({'status': exc.status_code, 'message': exc.detail}, status=exc.status_code)
 
         return super().handle_exception(exc)
+
+    @action(detail=False, methods=['get'])
+    def get_perevals_by_user_email(self, request):
+        email = request.query_params.get('email')
+
+        if not email:
+            return Response({'state': 0, 'message': 'Не указан email пользователя.'}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+        except ObjectDoesNotExist:
+            return Response({'state': 0, 'message': 'Пользователь с указанным email не найден.'}, status=404)
+
+        perevals = PerevalAdd.objects.filter(users=user)
+
+        serializer = PerevalAddSerializer(perevals, many=True)
+        return Response(serializer.data, status=200)
 
 
 class PerevalImagesViewSet(viewsets.ModelViewSet):
